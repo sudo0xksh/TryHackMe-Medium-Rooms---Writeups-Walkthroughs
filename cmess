@@ -1,0 +1,200 @@
+# cmess — TryHackMe (Medium) 🧩🧠🐧
+
+cmess is a Medium box that quietly reminds you of a painful truth:
+
+> **Production sites are risky.  
+> Development subdomains are catastrophic.**
+
+No zero-days.  
+No kernel magic.  
+Just CMS logic, forgotten backups, and a cron job that trusted user input.
+
+---
+
+## Machine Overview 🖥️📌
+
+Machine Name: cmess  
+Target IP: 10.10.xxx.xxx (changes during the lab)  
+Operating System: Ubuntu-based Linux  
+
+This machine focuses on:
+- **CMS identification and enumeration**
+- **Subdomain discovery** leading to weaker dev environments
+- **Authenticated RCE** via CMS functionality
+- Privilege escalation through an **insecure cron job**
+
+Very realistic. Very common.
+
+---
+
+## Initial Reconnaissance 🔍
+
+A full TCP scan was performed to understand the exposed surface.
+
+nmap -sC -sV 10.10.xxx.xxx
+
+Services discovered:
+
+22/tcp   SSH     OpenSSH 7.2p2 🔐  
+80/tcp   HTTP    Apache 2.4.18 (Gila CMS) 🌐  
+
+With only SSH and HTTP exposed, it was clear:
+👉 **The web application was the entry point.**
+
+---
+
+## Web Enumeration 🌐🧐
+
+Manual inspection confirmed the site was running **Gila CMS**.
+
+robots.txt revealed several interesting disallowed paths:
+
+/src/  
+/themes/  
+/lib/  
+
+These paths suggested:
+- Active development
+- A full CMS install
+- More surface area than a static site
+
+Initial direct exploitation attempts against the CMS failed, indicating:
+- Version-specific behavior, or
+- Missing pieces of the attack surface
+
+Time to widen the scope.
+
+---
+
+## Subdomain Enumeration 🔎🌐
+
+A provided hint emphasized **subdomain fuzzing**.
+
+Expanding enumeration beyond the main domain revealed a critical find:
+
+👉 **dev.cmess.thm**
+
+This development subdomain exposed functionality that did not exist on the main site.
+
+As usual:
+- Less hardened
+- More verbose
+- More dangerous
+
+---
+
+## Admin Credential Discovery 🔑
+
+The development interface leaked valid administrative credentials:
+
+Email: andre@cmess.thm  
+Password: KPFTN_f2yxe%  
+
+Using these credentials:
+- Access to the **Gila CMS admin panel** was obtained successfully
+
+At this point, the box was one login away from execution.
+
+---
+
+## Initial Foothold via CMS RCE 💥
+
+The CMS version running on the **dev** subdomain was vulnerable to an **authenticated RCE**.
+
+By abusing this functionality:
+- Arbitrary command execution was achieved
+- A reverse shell was established
+
+Initial foothold confirmed.
+
+No brute force.  
+No guessing.  
+Just dev mistakes.
+
+---
+
+## Post-Exploitation Enumeration 🔎
+
+After stabilizing the shell, further enumeration revealed a sensitive backup file:
+
+/opt/.password.bak
+
+Inside it:
+- Plaintext SSH credentials for user **andre**
+
+Using these credentials:
+- A stable SSH session was established
+- user.txt flag retrieved
+
+At this stage, access was solid and persistent.
+
+---
+
+## Privilege Escalation 🚀
+
+Further enumeration uncovered a **cron job** running with elevated privileges.
+
+Critical observation:
+- The cron job executed commands unsafely
+- Checkpoint-style arguments could be abused
+
+By crafting a malicious script and abusing this behavior:
+- Arbitrary commands were executed as root
+
+No exploits required.
+Just bad automation.
+
+---
+
+## Root Access 🏁👑
+
+- Root privileges confirmed  
+- root.txt flag retrieved  
+- Full system compromise achieved  
+
+cmess completed.
+
+---
+
+## Key Takeaways 🧠📌
+
+- CMS identification must be followed by version-aware testing  
+- Subdomain enumeration often reveals weaker dev environments  
+- Authenticated RCEs are extremely powerful and often ignored  
+- Backup files love storing plaintext credentials  
+- Cron jobs remain a reliable privilege escalation vector  
+
+---
+
+## 📬 Contact & Projects 👨‍💻📎
+
+**Daksh Baweja**  
+📧 Email: dakshbaweja20@gmail.com  
+🐙 GitHub: https://github.com/sudo0xksh  
+🔗 LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid 🔥
+
+**Deteroid** is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers **hunt smarter, not louder**.
+
+📸 Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+cmess delivers a familiar lesson:
+
+> “If dev is public, prod is already compromised.”
+
+One CMS.  
+One subdomain.  
+One cron job.
+
+Medium box.  
+Very real-world failures.
