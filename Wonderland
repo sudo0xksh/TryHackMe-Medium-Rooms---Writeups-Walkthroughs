@@ -1,0 +1,271 @@
+# Wonderland — TryHackMe (Medium) 🐇🧠🎩
+
+Wonderland is not about exploits.
+It’s about **understanding how code actually executes**.
+
+No scanners saving you.
+No payload spam.
+Just logic, imports, PATHs, and trust assumptions falling apart.
+
+If you rush, you miss it.
+If you read, you win.
+
+---
+
+## Machine Overview 🖥️📌
+
+Room Name: Wonderland  
+Operating System: Linux  
+Difficulty: Medium  
+
+Core focus areas:
+- Web enumeration through **logic clues**
+- SSH-based foothold
+- **Python Import Hijacking**
+- **PATH Hijacking**
+- Lateral movement
+- **SUID abuse via GTFOBins**
+
+This machine tests **mindset**, not tooling.
+
+---
+
+## Reconnaissance 🔍
+
+Initial scan revealed a very small attack surface:
+
+- 22/tcp  SSH 🔐  
+- 80/tcp  HTTP 🌐  
+
+That’s it.
+
+Small surface usually means:
+👉 No brute force  
+👉 No spray-and-pray  
+👉 Logic-based exploitation incoming
+
+---
+
+## Web Enumeration 🌐🧐
+
+The homepage displayed a single hint:
+
+> **"Follow the white rabbit."**
+
+No robots.txt  
+No obvious source code comments  
+
+Directory enumeration revealed a hidden path:
+
+/r/a/b/b/i/t
+
+css
+Copy code
+
+Inside the page source:
+- Hardcoded credentials were found
+
+Credentials:
+alice : HowDothTheLittleCrocodileImproveHisShiningTail
+
+yaml
+Copy code
+
+This was the intended entry point.
+
+---
+
+## Initial Foothold 🐇
+
+Using the discovered credentials:
+
+ssh alice@target
+
+yaml
+Copy code
+
+Result:
+- Login successful
+- Initial foothold as **alice**
+
+Clean and intentional.
+
+---
+
+## Privilege Escalation — Part 1  
+### Python Import Hijacking 🐍💥
+
+Checking sudo permissions revealed:
+- Alice could run a **Python script as user `rabbit`**
+
+At first glance:
+- Script logic looked harmless
+
+That’s the trap.
+
+---
+
+### Vulnerable Behavior
+
+The script contained:
+
+```python
+import random
+Critical mistake:
+
+No absolute path used
+
+Python import resolution order:
+
+Current directory
+
+PYTHONPATH
+
+Standard library
+
+This opens the door for import hijacking.
+
+Exploitation
+A malicious random.py was created in the working directory:
+
+python
+Copy code
+import os
+os.system("/bin/bash")
+When the script was executed:
+
+Python loaded the attacker-controlled random.py
+
+Code execution triggered automatically
+
+Result:
+
+Shell obtained as rabbit
+
+No exploit.
+Just understanding Python.
+
+Privilege Escalation — Part 2
+PATH Hijacking ☕🚀
+As user rabbit, further enumeration revealed:
+
+A binary named teaParty
+
+Executed with elevated privileges
+
+Static analysis showed:
+
+The binary executed the date command
+
+No absolute path used
+
+Conceptually:
+
+c
+Copy code
+system("date");
+That’s a problem.
+
+Exploitation
+A fake date script was created:
+
+bash
+Copy code
+#!/bin/bash
+/bin/bash
+Steps:
+
+Made executable
+
+Placed earlier in $PATH
+
+When teaParty was executed:
+
+It ran the fake date
+
+Spawned a shell in a higher-privileged context
+
+PATH hijacking done right.
+
+Lateral Movement — hatter 🎩
+From this context:
+
+Credentials for user hatter were discovered
+
+SSH login as hatter succeeded
+
+Another trust boundary crossed.
+
+Final Privilege Escalation
+SUID Abuse (Perl) 👑
+As hatter, enumeration revealed:
+
+A Perl binary with the SUID bit set
+
+Classic GTFOBins scenario.
+
+Exploitation:
+
+bash
+Copy code
+perl -e 'exec "/bin/bash";'
+Because of SUID:
+
+Shell executed as root
+
+Game over.
+
+Flags 🏁
+User Flag: Retrieved during initial access
+
+Root Flag: Retrieved after Perl SUID escalation
+
+Wonderland fully compromised.
+
+Real Learnings 🧠📌
+1️⃣ Code doesn’t need to look vulnerable
+Missing absolute paths are vulnerabilities
+
+2️⃣ Two real-world exploitation techniques:
+
+Python Import Hijacking
+
+PATH Hijacking
+
+These are production bugs, not CTF tricks.
+
+3️⃣ Wonderland tests mindset, not tools
+
+No exploit-db
+
+No Metasploit
+
+No brute force
+
+Only:
+
+Reading code
+
+Understanding execution flow
+
+Trust boundaries failing quietly
+
+📬 Contact & Projects 👨‍💻📎
+Daksh Baweja
+📧 Email: dakshbaweja20@gmail.com
+🐙 GitHub: https://github.com/sudo0xksh
+🔗 LinkedIn: https://www.linkedin.com/in/dakshbaweja
+
+🚀 Deteroid 🔥
+Deteroid is a community-driven platform for bug bounty hunters
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers hunt smarter, not louder.
+
+📸 Instagram: https://www.instagram.com/deteroids/
+
+Final Words ☕
+Wonderland teaches one brutal truth:
+
+“The vulnerability isn’t in the code.
+It’s in the assumptions.”
