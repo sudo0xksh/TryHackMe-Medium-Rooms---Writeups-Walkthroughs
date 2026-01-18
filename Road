@@ -1,0 +1,220 @@
+# ROAD — TryHackMe (Medium) 🛣️🧠🌐
+
+ROAD is a Medium box that feels *very* real-world.
+No loud exploits. No kernel panic.
+
+Just **logic flaws**, **parameter tampering**, and **privilege escalation by chaining small mistakes**.
+
+If you understand how web apps actually break in production, this box clicks instantly.
+
+---
+
+## Machine Overview 🖥️📌
+
+Room Name: ROAD  
+Target IP: 10.10.x.x  
+Operating System: Ubuntu Linux  
+Difficulty: Medium  
+
+This machine focuses on:
+- Web application **logic flaws**
+- **Parameter tampering** leading to account takeover
+- File upload abuse → reverse shell
+- Credential reuse and user pivoting
+- Privilege escalation via **LD_PRELOAD**
+
+Very close to real bug bounty scenarios.
+
+---
+
+## Initial Reconnaissance 🔍
+
+Basic service enumeration showed a minimal attack surface.
+
+nmap -sC -sV 10.10.x.x
+
+Open ports:
+
+22/tcp   SSH    OpenSSH 8.2p1 🔐  
+80/tcp   HTTP   Apache 2.4.41 🌐  
+
+Only SSH and HTTP were exposed, strongly suggesting:
+👉 **Web application is the entry point**
+
+---
+
+## Web Enumeration 🌐🧐
+
+Initial manual inspection revealed:
+- Nothing interesting in robots.txt
+- No exposed JavaScript secrets
+- No obvious injection points
+
+At this stage, the application looked *clean*.
+
+Which usually means:
+👉 The bug is logical, not technical.
+
+---
+
+## Identifying Critical Information 🧠
+
+While inspecting application behavior and responses, one detail stood out:
+
+👉 **admin@sky.thm**
+
+At first glance, it looked harmless.
+
+It wasn’t.
+
+This email later became the **entire attack chain**.
+
+---
+
+## Parameter Tampering — Admin Account Takeover 🎯
+
+The application allowed profile updates via a POST request.
+
+Critical mistake:
+- The backend **trusted user-controlled parameters**
+
+By intercepting the request and replacing the email value with:
+
+admin@sky.thm
+
+The application:
+- Accepted the change
+- Updated account ownership
+- Effectively **promoted the attacker to admin**
+
+Re-logging confirmed:
+- Admin panel access obtained ✅
+
+No exploits.
+Just broken logic.
+
+---
+
+## File Upload Abuse & Reverse Shell 💥
+
+Inside the admin panel, a file upload feature was available.
+
+Initial attempts to upload a shell failed.
+
+Instead of forcing it, the page source was inspected.
+
+Key discovery:
+- A directory used for **profile image uploads**
+
+By uploading the reverse shell to that directory and accessing it directly:
+
+- Reverse shell triggered  
+- Initial foothold achieved  
+
+Classic execution path abuse.
+
+---
+
+## Local Enumeration 🔎
+
+After stabilizing the shell:
+
+- **linPEAS** was uploaded for enumeration
+- System showed potential vulnerability to **CVE-2021-3560 (polkit)**  
+  (unreliable here, not the intended path)
+
+Further enumeration revealed:
+- **MongoDB credentials stored locally**
+
+This shifted the attack path again.
+
+---
+
+## Credential Reuse & User Pivoting 🔄
+
+Discovered credentials:
+
+Username: **webdeveloper**  
+Password: **BahamasChapp123!@#**
+
+Using sudo access:
+
+sudo -u webdeveloper /bin/bash
+
+Result:
+- Shell as **webdeveloper**
+- User-level pivot successful
+
+Credential reuse doing what it always does.
+
+---
+
+## Privilege Escalation — LD_PRELOAD 🚀
+
+The **webdeveloper** user had sudo permissions vulnerable to **LD_PRELOAD** injection.
+
+Steps taken:
+- Malicious shared object compiled
+- LD_PRELOAD abused during sudo execution
+
+Result:
+- Root shell obtained  
+- Full system compromise
+
+Clean escalation. No noise.
+
+---
+
+## Flags 🏁
+
+- User Flag: Retrieved  
+- Root Flag: Retrieved  
+
+ROAD completed.
+
+---
+
+## Key Learnings 🧠📌
+
+- Logic flaws can be more dangerous than technical exploits  
+- Parameter tampering can lead to full account takeover  
+- File uploads must always be traced to execution paths  
+- Enumeration beats blind exploitation  
+- Credential reuse is extremely common  
+- Privilege escalation often requires chaining small weaknesses  
+
+---
+
+## 📬 Contact & Projects 👨‍💻📎
+
+**Daksh Baweja**  
+📧 Email: dakshbaweja20@gmail.com  
+🐙 GitHub: https://github.com/sudo0xksh  
+🔗 LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid 🔥
+
+**Deteroid** is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers **hunt smarter, not louder**.
+
+📸 Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+ROAD proves one uncomfortable truth:
+
+> “You don’t need vulnerabilities  
+> when the logic is already broken.”
+
+One email.  
+One upload path.  
+One preload.
+
+Medium box.  
+Very real-world web failure.
