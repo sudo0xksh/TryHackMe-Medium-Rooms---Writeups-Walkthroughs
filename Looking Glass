@@ -1,0 +1,240 @@
+# Looking Glass — TryHackMe (Hard) 🪞🧠🐧
+
+Looking Glass is not a machine you *scan* and exploit.  
+It’s a machine you **read**, **interpret**, and **think through**.
+
+This room deliberately weaponizes:
+- Noise
+- Misdirection
+- Cryptography
+- Lateral movement
+
+If you rely only on tools here, you lose.
+
+---
+
+## Machine Overview 🖥️📌
+
+Machine Name: Looking Glass  
+Target IP: 10.10.xxx.xxx  
+Operating System: Ubuntu-based Linux  
+Difficulty: Hard  
+
+This machine focuses on:
+- **Non-traditional enumeration**
+- **Port-based puzzles**
+- **Cryptographic analysis**
+- **Multi-user lateral movement**
+- Privilege escalation through **logic, not exploits**
+
+This is a thinking room, not a spraying one.
+
+---
+
+## Initial Reconnaissance 🔍
+
+As usual, enumeration started with a full TCP scan.
+
+nmap -sC -sV 10.10.xxx.xxx
+
+What came back was immediately suspicious.
+
+Observations:
+- Standard SSH on port 22
+- Dozens of additional open ports
+- Many ports running **Dropbear SSH**
+- Ports scattered across wide ranges (9000–13000+)
+
+This clearly indicated:
+👉 **Intentional misdirection**
+
+The ports were not services — they were **signals**.
+
+Traditional enumeration was not the answer.
+
+---
+
+## Deeper Port Discovery 🧠
+
+Some ports behaved inconsistently and were not fully captured by Nmap.
+
+A faster scanner was used to get clarity.
+
+rustscan revealed an additional SSH-like service:
+
+👉 **Port 13881**
+
+Connecting to this port did not provide a shell.
+
+Instead, it returned **cipher-like output**.
+
+At this point, it was clear:
+This was not exploitation — this was **cryptanalysis**.
+
+---
+
+## Cipher Analysis 🔐
+
+The output from the service resembled encrypted text.
+
+Further inspection identified it as a **Vigenère cipher**.
+
+After decoding:
+- Key: `thealphabetcipher`
+
+Decoded message:
+> **bewareTheJabberwock**
+
+This message was not random.
+It was a **direct hint toward a valid user**.
+
+---
+
+## Initial SSH Access 🔑
+
+Using the decoded hint, valid credentials were identified:
+
+Username: **jabberwock**  
+Password: **CindersSayingKeepingHurricane**
+
+SSH login succeeded.
+
+Results:
+- Initial access achieved  
+- User flag retrieved  
+
+The puzzle phase was complete.
+Now came movement.
+
+---
+
+## Privilege Escalation — Cron Job Abuse ⏱️
+
+Post-exploitation enumeration revealed an interesting cron entry:
+
+@reboot tweedledum bash /home/jabberwock/twasBrillig.sh
+
+Key observations:
+- Script located in jabberwock’s home directory
+- Executed as user **tweedledum**
+- jabberwock had permission to **reboot the system**
+
+This created a clean escalation path.
+
+Steps taken:
+- Script modified to include a shell payload
+- System rebooted
+- Cron job triggered automatically
+
+Result:
+- Logged in as **tweedledum**
+
+Privilege escalation without exploits.
+
+---
+
+## Credential Discovery via Encoded File 🧩
+
+Further enumeration revealed a file:
+
+👉 **humptydumpty.txt**
+
+The file contained large blocks of hex-encoded data.
+
+After decoding, the message revealed:
+
+> the password is **zyxwvutsrqponmlk**
+
+These credentials were valid for user **humptydumpty**.
+
+SSH login succeeded.
+
+Lateral movement continued.
+
+---
+
+## Lateral Movement — Alice 🐇
+
+Further system inspection revealed:
+- Execute permissions on user **alice**
+- Read access to **alice’s SSH private key**
+
+Using the extracted private key:
+- SSH login as **alice** succeeded
+
+At this stage, the chain was complete.
+Only one step remained.
+
+---
+
+## Root Privilege Escalation 👑
+
+Privilege enumeration for alice revealed:
+
+alice ALL=(ALL) NOPASSWD: /bin/bash
+
+This is a direct escalation vector.
+
+Executing:
+sudo /bin/bash
+
+Result:
+- Root shell obtained
+
+No tricks. No barriers.
+
+---
+
+## Root Access 🏁
+
+- Root privileges confirmed  
+- Final flag retrieved  
+- Machine fully compromised  
+
+Looking Glass completed.
+
+---
+
+## Key Takeaways 🧠📌
+
+- Not all challenges are exploit-driven  
+- Excessive open ports can be deliberate misdirection  
+- Cryptography can be an enumeration vector  
+- Cron jobs remain dangerous when writable  
+- Lateral movement is often required before root  
+- Enumeration depth matters more than tool count  
+
+---
+
+## 📬 Contact & Projects 👨‍💻📎
+
+**Daksh Baweja**  
+📧 Email: dakshbaweja20@gmail.com  
+🐙 GitHub: https://github.com/sudo0xksh  
+🔗 LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid 🔥
+
+**Deteroid** is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers **hunt smarter, not louder**.
+
+📸 Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+Looking Glass leaves one message behind:
+
+> “If you only scan, you will miss everything.”
+
+No exploits.  
+No shortcuts.  
+Just logic, patience, and thinking sideways.
+
+Hard box.  
+Excellent design.
