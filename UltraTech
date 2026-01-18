@@ -1,0 +1,51 @@
+# Ultratech — TryHackMe (Medium) ⚙️🧠🐳
+
+Ultratech is one of those boxes that looks *normal* until you actually pay attention.
+
+The front-end lies.
+The backend leaks.
+And Docker?  
+Docker does what Docker does when people trust it too much.
+
+This box rewards **curiosity over tools**.
+
+---
+
+## Machine Overview 🖥️📌
+
+Room Name: Ultratech  
+Operating System: Linux (Containerized)  
+Difficulty: Medium  
+
+Focus areas:
+- Client-side JavaScript analysis
+- Internal API abuse
+- **Command Injection**
+- Credential discovery from application data
+- **Docker misconfiguration & container escape**
+
+Very close to real-world startup infra failures.
+
+---
+
+## Reconnaissance 🔍
+
+Initial enumeration revealed:
+- A standard web application
+- An **unusual internal service on port 8081**
+
+While the main website appeared minimal, inspecting:
+- Browser DevTools
+- Page source
+- JavaScript files  
+
+…revealed API calls being made during authentication.
+
+That’s where the real attack surface lived.
+
+---
+
+## Web Application Analysis 🌐🧐
+
+While reviewing client-side JavaScript, a suspicious request appeared during login:
+
