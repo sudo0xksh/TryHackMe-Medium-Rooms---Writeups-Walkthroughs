@@ -1,0 +1,191 @@
+# Source — TryHackMe (Easy) 💻⚙️🔥
+
+Source is a straight-up **service exploitation** box.
+No chaining, no tricks — just **clean recon + correct exploit**.
+
+If you miss version enumeration, you miss the box.
+If you do it right, you’re root in minutes.
+
+---
+
+## Machine Overview 🖥️📌
+
+Room Name: Source  
+Target IP: 10.10.52.90  
+Operating System: Linux  
+Difficulty: Easy  
+
+Primary focus:
+- Service enumeration
+- Version identification
+- Exploit research
+- Exploiting outdated admin panels (Webmin)
+
+Very realistic real-world misconfiguration scenario.
+
+---
+
+## Reconnaissance 🔍
+
+Initial enumeration was performed using Nmap.
+
+nmap -sC -sV 10.10.52.90
+
+yaml
+Copy code
+
+Results:
+
+- 22/tcp     SSH      OpenSSH 7.6p1  
+- 10000/tcp  HTTP     MiniServ 1.890 (Webmin)
+
+Key observations:
+- SSH is present but not the intended entry point
+- Webmin exposed on port 10000
+- Webmin is historically **high-risk if outdated**
+
+This immediately shaped the attack path.
+
+---
+
+## Web Enumeration — Webmin (Port 10000) 🌐
+
+Visiting port 10000 revealed a **Webmin login panel**.
+
+Version identified:
+MiniServ 1.890
+
+yaml
+Copy code
+
+This version is known to be affected by a **critical unauthenticated Remote Code Execution vulnerability**.
+
+At this point:
+- No brute force required
+- No credentials required
+- Exploitation path confirmed
+
+---
+
+## Exploitation — Webmin RCE 💥
+
+Public exploit research confirmed that:
+- MiniServ 1.890 is vulnerable
+- A working exploit is available in Metasploit
+
+### Metasploit Module Used
+
+use exploit/linux/http/webmin_backdoor
+
+shell
+Copy code
+
+### Configuration
+
+set RHOSTS 10.10.52.90
+set RPORT 10000
+
+shell
+Copy code
+
+### Execution
+
+run
+
+yaml
+Copy code
+
+---
+
+## Initial Foothold 🖥️
+
+Result:
+- Exploit executed successfully
+- Shell obtained **directly as root**
+
+This means:
+- No user-level access required
+- No privilege escalation needed
+
+The system was already fully compromised.
+
+---
+
+## Root Access 👑
+
+With root access available immediately, the root flag was retrieved:
+
+cat /root/root.txt
+
+yaml
+Copy code
+
+✅ Root flag obtained
+
+---
+
+## User Flag Enumeration 👤
+
+Since the shell was already running as root, the user flag was located manually:
+
+find / -name user.txt 2>/dev/null
+cat /path/to/user.txt
+
+yaml
+Copy code
+
+✅ User flag obtained
+
+---
+
+## Summary 🏁
+
+- Identified Webmin running on port 10000  
+- Confirmed vulnerable MiniServ version  
+- Used known Webmin RCE exploit  
+- Gained immediate root shell  
+- Retrieved both user and root flags  
+
+No chaining. No escalation. Just clean exploitation.
+
+---
+
+## Key Takeaways 🧠📌
+
+- Version enumeration is critical  
+- Admin panels are prime attack targets  
+- Outdated Webmin instances = instant compromise  
+- Some boxes are won before privilege escalation even begins  
+- Recon + exploit research beats brute force every time  
+
+---
+
+## 📬 Contact & Projects 👨‍💻
+
+**Daksh Baweja**  
+Email: dakshbaweja20@gmail.com  
+GitHub: https://github.com/sudo0xksh  
+LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid
+
+Deteroid is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers **hunt smarter, not louder**.
+
+Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+Source reinforces one brutal real-world truth:
+
+> “If an admin panel is outdated and exposed,  
+> the system is already lost.”
+
+Easy box.  
+Very realistic failure.
