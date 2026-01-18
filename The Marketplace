@@ -1,0 +1,125 @@
+---
+
+The Marketplace - TryHackMe Writeup / Walkthrough
+The Marketplace - THM Writeup
+
+---
+
+Machine Overview
+Machine Name: The Marketplace
+ Target IP: 10.10.xxx.xxx
+ Operating System: Linux
+ Difficulty: Medium → Hard (depends on web exploitation comfort)
+This machine primarily focuses on web application logic flaws, client-side exploitation, and container-based privilege escalation.
+
+---
+
+1️⃣ Initial Reconnaissance
+The engagement began with a full TCP scan to identify exposed services.
+🔍 Nmap Scan
+nmap -sC -sV 10.10.xxx.xxx
+📌 Key Findings
+PortServiceDetails22SSHOpenSSH 7.6p180HTTPnginx 1.19.232768HTTPNode.js (Express)
+Both web services displayed the same application - The Marketplace - indicating a reverse proxy or backend service split.
+
+---
+
+2️⃣ Web Application Enumeration
+Initial inspection of the application showed:
+No sensitive information in robots.txt
+No credentials or secrets in JavaScript files
+No exposed API endpoints
+Admin panel visible but protected
+
+At first glance, the application appeared clean.
+However, a subtle hint suggested a logic flaw rather than a technical exploit:
+
+"If you think a listing is breaking the rules, you can report it!"
+
+This pointed toward user interaction–based exploitation.
+
+---
+
+3️⃣ Authentication & User Flow Analysis
+Instead of attacking the login directly, a closer look at the application flow revealed:
+Users can sign up
+Users can create listings
+Listings accept rich text / HTML content
+
+This indicated a possible client-side vulnerability.
+A test account was created to fully explore authenticated functionality.
+
+---
+
+4️⃣ Stored XSS Discovery
+While creating a new marketplace listing, user-controlled input was reflected without proper sanitization.
+This confirmed the presence of a Stored Cross-Site Scripting (XSS) vulnerability.
+At this stage:
+Uploading a web shell directly did not work
+Direct RCE was not possible
+
+The attack required chaining vulnerabilities.
+
+---
+
+5️⃣ XSS → Account Compromise → RCE
+The stored XSS payload was used to:
+Execute JavaScript in the context of another authenticated user
+Steal session information
+Hijack a higher-privileged account
+
+This ultimately resulted in access to a valid SSH user:
+User: jake
+SSH access was successfully obtained.
+✅ Initial foothold achieved
+
+---
+
+6️⃣ Privilege Escalation - Sudo Abuse
+Once logged in as jake, sudo permissions were enumerated:
+sudo -l
+Result:
+Ability to run backup.sh as user michael
+
+The script was writable, allowing command injection.
+A reverse shell was injected into the script and executed.
+✅ Shell obtained as michael
+
+---
+
+7️⃣ Container Escape (Docker)
+Further enumeration revealed:
+The system was running inside a Docker container
+Docker-related binaries were accessible
+
+Classic Linux privilege escalation paths failed, confirming containerization.
+By abusing Docker capabilities, a container escape was achieved, granting access to the host environment.
+✅ Root access obtained
+
+---
+
+8️⃣ Root Access & Completion
+Root shell obtained
+All flags retrieved
+Full compromise confirmed
+
+---
+
+🧠 Key Takeaways
+
+Not every vulnerability is technical - logic flaws matter
+Always explore authenticated user functionality
+Stored XSS can be far more dangerous than reflected XSS
+Vulnerability chaining is a critical real-world skill
+Docker misconfigurations can completely break isolation
+Enumeration > brute force > tools
+
+---
+
+📬 Contact & Projects
+Email: dakshbaweja20@gmail.com
+ GitHub: https://github.com/sudo0xksh
+🚀 Deteroid
+Deteroid is a dedicated review platform for bug bounty hunters to share insights, rate programs, and collaborate on cybersecurity findings.
+ Empowering ethical hackers with community-driven intel to hunt bugs smarter.
+📸 Instagram: https://www.instagram.com/deteroids/
