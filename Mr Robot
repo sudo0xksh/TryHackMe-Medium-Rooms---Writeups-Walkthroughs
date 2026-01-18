@@ -1,0 +1,215 @@
+# Mr. Robot — TryHackMe (Medium) 🤖🧠🐧
+
+Mr. Robot is a Medium box that rewards **reading hints**, **thinking before brute-forcing**,  
+and trusting **classic enumeration** over fancy tooling.
+
+If you rush, you miss flags.  
+If you read carefully, the machine solves itself.
+
+---
+
+## Machine Overview 🖥️📌
+
+Machine Name: Mr. Robot  
+Target IP: 10.10.xxx.xxx  
+Operating System: Linux  
+Difficulty: Medium  
+
+This machine focuses on:
+- Web-first enumeration
+- robots.txt abuse (yes, really)
+- Wordlist analysis instead of blind brute force
+- WordPress admin exploitation
+- Privilege escalation via **SUID misuse**
+
+Old-school mistakes. Timeless lessons.
+
+---
+
+## Initial Reconnaissance 🔍
+
+Enumeration began with a basic TCP scan.
+
+nmap -sC -sV 10.10.xxx.xxx
+
+The results were intentionally underwhelming.
+
+Observations:
+- Host was alive
+- Services were not clearly exposed
+- Traditional scanning wasn’t giving answers
+
+Hints suggested:
+👉 SSH, HTTP, and HTTPS exist — but **web exploration comes first**.
+
+---
+
+## Web Enumeration (Port 80 / 443) 🌐🧐
+
+Opening the website revealed a Mr. Robot–themed page with interactive hints.
+
+One clue stood out immediately:
+
+👉 **robots.txt**
+
+Visiting robots.txt revealed two critical paths:
+
+/fsocity.dic  
+/key-1-of-3.txt  
+
+Accessing `/key-1-of-3.txt` returned:
+
+073403c8a58a1f80d943455fb30724b9  
+
+This was **Key 1** — no decoding required.
+
+✅ First flag obtained.
+
+---
+
+## Wordlist Analysis (fsocity.dic) 📚🧠
+
+The file `fsocity.dic` contained a massive wordlist.
+
+But a hint warned:
+> *“There’s something fishy about this wordlist.”*
+
+Analysis revealed:
+- Thousands of duplicate entries
+- Suitable as both **username and password** list
+
+Conclusion:
+👉 This is an **analysis problem**, not a brute-force one.
+
+---
+
+## Username Discovery 🔎
+
+Using the wordlist for **targeted username fuzzing** against WordPress revealed:
+
+👉 Valid username: **elliot**
+
+This confirmed:
+- WordPress backend
+- Authentication as the next attack vector
+
+---
+
+## Credential Discovery via Web Enumeration 🔑
+
+Brute force alone didn’t solve it.
+
+Manual inspection of site pages revealed a **license page** containing Base64 text:
+
+ZWxsaW90OkVSMjgtMDY1Mgo=
+
+Decoding it produced:
+
+elliot:ER28-0652  
+
+These credentials worked.
+
+👉 WordPress admin access achieved.
+
+---
+
+## Initial Foothold — WordPress RCE 💥
+
+With admin access:
+- A WordPress theme file was edited
+- A PHP reverse shell was injected
+- Page loaded → shell triggered
+
+Result:
+- Shell obtained as **daemon** user
+- Initial foothold established
+
+Clean and predictable.
+
+---
+
+## Lateral Movement — robot 🧑‍💻
+
+Further enumeration revealed a directory owned by **robot** containing:
+- key-2-of-3.txt
+- A file containing an **MD5 hash**
+
+The hash was cracked, revealing robot’s password.
+
+SSH login as robot succeeded.
+
+✅ Second flag retrieved.
+
+---
+
+## Privilege Escalation — SUID Abuse 🚀
+
+Privilege enumeration revealed a critical misconfiguration:
+
+👉 **nmap** had the SUID bit set.
+
+Using GTFOBins:
+
+
+nmap --interactive
+!sh
+
+
+Result:
+- Root shell spawned without sudo
+
+---
+
+## Root Access 🏁👑
+
+- Root privileges confirmed  
+- Third and final flag retrieved  
+- Machine fully compromised  
+
+Mr. Robot completed.
+
+---
+
+## Key Takeaways 🧠📌
+
+- Always check robots.txt  
+- Wordlists are for analysis, not just brute force  
+- Manual enumeration beats automation here  
+- WordPress admin access almost always equals RCE  
+- SUID binaries are high-value escalation targets  
+- Hints exist for a reason — trust them  
+
+---
+
+## 📬 Contact & Projects 👨‍💻📎
+
+**Daksh Baweja**  
+📧 Email: dakshbaweja20@gmail.com  
+🐙 GitHub: https://github.com/sudo0xksh  
+🔗 LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid 🔥
+
+**Deteroid** is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers **hunt smarter, not louder**.
+
+📸 Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+Mr. Robot proves a classic truth:
+
+> “If you read carefully, the system tells you how to hack it.”
+
+No exploits.  
+No races.  
+Just enumeration done right.
+
+Medium box.  
+Iconic lessons.
