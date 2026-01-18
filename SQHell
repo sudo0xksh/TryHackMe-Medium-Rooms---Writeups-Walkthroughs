@@ -1,0 +1,289 @@
+# SQHell — TryHackMe (Medium) 🧠🔥🗄️
+
+SQHell is not a “throw payloads and pray” box.
+
+This machine marked the **end of my 50-day CTF cycle**, and honestly, it felt like a checkpoint — not because of difficulty, but because of **how much thinking it demanded**.
+
+SQHell forces you to go beyond:
+- basic login bypasses
+- UNION spam
+- tool-only mentality
+
+This box teaches **how SQL actually behaves when things get weird**.
+
+---
+
+## Machine Overview 🖥️📌
+
+Room Name: SQHell  
+Target IP: 10.201.2.233  
+Category: Web / SQL Injection  
+Difficulty: Medium  
+
+Focus Areas:
+- Manual SQL Injection
+- SQLi in **non-traditional input vectors**
+- Header-based SQL injection
+- SQL Inception (nested / self-referencing queries)
+- Thinking when UNION stops working
+
+Pure SQLi lab. No distractions.
+
+---
+
+## Preface 🧠
+
+This wasn’t just about flags.
+
+This box was about:
+- getting stuck
+- trying things that didn’t work
+- reading
+- coming back
+- understanding *why* something works
+
+If you rush SQHell, you miss the lesson.
+
+---
+
+## Reconnaissance 🔍
+
+Initial scanning behaved oddly.
+
+- Nmap didn’t return meaningful results
+- Alternative enumeration revealed:
+  - HTTP
+  - SSH
+
+Given the room name **SQHell**, the attack surface was clearly the **web application**.
+
+SSH was irrelevant.
+
+---
+
+## Web Enumeration 🌐
+
+The application was small:
+- ~4–6 pages
+- Minimal UI
+- Clean frontend
+- Multiple user-related endpoints
+
+Nothing screamed “vulnerable”.
+
+But **manual testing of POST parameters** told a different story.
+
+---
+
+## 🚩 Flag 1 — Login SQL Injection
+
+Testing the login form revealed classic SQLi behavior.
+
+Payload used:
+
+admin' OR 1=1#
+
+yaml
+Copy code
+
+Result:
+- Authentication bypassed
+- **Flag 1 retrieved**
+
+This confirmed:
+- User input was directly concatenated into SQL queries
+- No sanitization, no parameterization
+
+---
+
+## 🚩 Flag 2 — SQL Injection via HTTP Headers
+
+### Hint:
+> “Make sure to read the terms and conditions ;)”
+
+Inside Terms & Conditions:
+> “We log IP addresses for analytics.”
+
+That sentence mattered.
+
+---
+
+### Vulnerable Vector
+
+Testing HTTP headers revealed that **X-Forwarded-For** was:
+- Logged
+- Stored
+- Used in database queries
+- Not sanitized
+
+Injecting SQL payloads into this header worked.
+
+Result:
+- **Flag 2 retrieved via header-based SQL injection**
+
+Lesson:
+SQLi doesn’t live only in forms.
+
+---
+
+## 🚩 Flag 3 — Username Availability Check
+
+During registration, the app makes a background request to:
+
+/check-username
+
+yaml
+Copy code
+
+This endpoint:
+- Takes user input
+- Evaluates it directly in a SQL query
+
+Manual testing confirmed SQLi.
+
+Using `sqlmap` here allowed:
+- Database enumeration
+- Data extraction
+
+Result:
+- **Flag 3 retrieved**
+
+---
+
+## 🚩 Flag 4 — SQL Inception (The Hard Part) 🌀
+
+### Hint:
+> “Well, dreams, they feel real while we’re in them right?”
+
+(Inception, 2010)
+
+---
+
+### Discovery
+
+Endpoint identified:
+
+/user?id=1
+
+yaml
+Copy code
+
+Confirmed vulnerable.
+
+---
+
+### Enumeration
+
+- `ORDER BY 4` failed → **3 columns**
+- UNION payloads worked… but only against `information_schema`
+- Normal UNION-based extraction failed for real tables
+
+This is where things broke.
+
+---
+
+## What Is SQL Inception? 🧠
+
+SQL Inception happens when:
+- A query references data **within the same database context**
+- Queries are layered or nested
+- Standard UNION logic fails due to structure
+
+The backend query was **self-referencing**.
+
+This required:
+- Understanding query flow
+- Crafting nested SQL payloads
+- Extracting data from the same execution context
+
+After research, retries, and restructuring queries:
+
+Result:
+- **Flag 4 retrieved**
+
+This part is worth revisiting later — it’s painful but educational.
+
+---
+
+## 🚩 Flag 5 — Final SQL Injection
+
+Another vulnerable endpoint was identified:
+
+/post?id=
+
+sql
+Copy code
+
+Steps:
+- Determined column count
+- Identified database & table structure
+
+Final payload used:
+
+/post?id=2 AND 1=2
+UNION SELECT 1,2,concat(id,flag),4
+FROM sqhell_5.flag
+LIMIT 0,1-- -
+
+yaml
+Copy code
+
+Result:
+- **Final flag retrieved**
+
+SQHell completed.
+
+---
+
+## Conclusion 🏁
+
+SQHell is not about speed.
+
+It’s about:
+- understanding SQL behavior
+- testing assumptions
+- attacking places people don’t usually look
+- thinking when tools stop helping
+
+---
+
+## Key Takeaways 🔑
+
+- SQLi exists far beyond login forms  
+- HTTP headers are dangerous when trusted  
+- Not all SQL injections are UNION-friendly  
+- SQL Inception is real — and painful 😄  
+- Struggling is part of learning  
+
+---
+
+## 📬 Contact & Projects 👨‍💻
+
+**Daksh Baweja**  
+Email: dakshbaweja20@gmail.com  
+GitHub: https://github.com/sudo0xksh  
+LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid
+
+Deteroid is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers **hunt smarter, not louder**.
+
+Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+SQHell teaches one honest truth:
+
+> “If SQL was easy,  
+> everyone would understand it.”
+
+Medium box.  
+Heavy thinking.  
+Worth every minute.
