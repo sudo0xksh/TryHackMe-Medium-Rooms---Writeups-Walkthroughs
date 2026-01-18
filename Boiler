@@ -1,0 +1,211 @@
+# Boiler CTF — TryHackMe (Medium) 🧱🔥🧠
+
+Boiler CTF is a Medium box built to test **discipline in enumeration**.
+
+No rushing.  
+No guesswork.  
+Just layers of clues quietly asking one question:
+
+> **“Did you enumerate properly?”**
+
+---
+
+## Machine Overview 🖥️📌
+
+Machine Name: Boiler CTF  
+Target IP: 10.10.xxx.xxx  
+Operating System: Ubuntu-based Linux  
+
+This machine focuses on:
+- Relentless **service and content enumeration**
+- Abusing **anonymous FTP for clues**
+- Exploiting a **vulnerable web application**
+- Escalating privileges via **misconfigured SUID binaries**
+
+If you skip steps here, the box punishes you.
+
+---
+
+## Initial Reconnaissance 🔍
+
+A full TCP scan was performed to map the attack surface.
+
+nmap -sC -sV 10.10.xxx.xxx
+
+Services discovered:
+
+21/tcp     FTP      vsFTPd 3.0.3 (Anonymous login enabled) 📂  
+80/tcp     HTTP     Apache 2.4.18 (Default page) 🌐  
+10000/tcp  HTTP     MiniServ 1.930 (Webmin) ⚙️  
+High port  SSH      Discovered during extended enumeration 🔐  
+
+The mix of FTP, multiple web services, and Webmin made it clear:
+
+👉 **This box will not fall without thorough enumeration.**
+
+---
+
+## FTP Enumeration 📂🧠
+
+Anonymous FTP access was enabled.
+
+Inside the FTP directory, a text file was discovered containing encoded content.
+
+After decoding using **ROT13**, the message read:
+
+> *“Just wanted to see if you find it.  
+> Remember: Enumeration is the key!”*
+
+Not subtle.  
+Not optional.
+
+---
+
+## Web Enumeration (Port 80) 🌐🧐
+
+The default Apache page showed nothing useful at first glance.
+
+However, checking **robots.txt** revealed a long list of unusual paths:
+
+/tmp  
+/.ssh  
+/yellow  
+/not  
+/a+rabbit  
+/hole  
+/or  
+/is  
+/it  
+
+A provided hint stated:
+
+> **“List & read, don’t reverse.”**
+
+This suggested:
+- Paths should be accessed **in order**
+- No brute forcing or reversing logic
+
+Manually visiting these paths revealed additional clues, including a long numeric sequence — reinforcing that the challenge was **layered** and intentional.
+
+---
+
+## CMS Identification 🧩
+
+Further enumeration revealed the application was running **Joomla**.
+
+Initial mistakes:
+- Joomla was identified
+- But not enumerated deeply enough
+
+Correcting this oversight and expanding Joomla-specific enumeration uncovered a hidden directory:
+
+👉 **_test**
+
+This directory immediately became the primary attack vector.
+
+---
+
+## Initial Foothold via Web Exploitation 💥
+
+Inside the `_test` directory, a vulnerable PHP endpoint was found.
+
+By manipulating a URL parameter, arbitrary command execution was achieved:
+
+index.php?plot=;cat log.txt
+
+This allowed direct reading of server-side files.
+
+Inside one of the logs:
+- Valid username discovered
+- Corresponding password recovered
+
+The foothold was earned through patience, not force.
+
+---
+
+## Initial Access 🔓
+
+Using the recovered credentials, SSH access was obtained.
+
+Results:
+- User-level shell established
+- Initial foothold confirmed
+
+Further enumeration inside the user’s home directory revealed:
+- A backup script containing additional credentials
+
+The `user.txt` flag was located inside a hidden directory and submitted.
+
+---
+
+## Privilege Escalation 🚀
+
+Post-exploitation enumeration focused on binaries with SUID permissions.
+
+A critical finding:
+- **find** binary running with SUID
+
+While `find` appears harmless, when misconfigured it can execute commands as root.
+
+Using a standard **GTFOBins** technique:
+- Root shell was spawned successfully
+
+No kernel exploits.  
+No race conditions.  
+Just trusted binaries misused.
+
+---
+
+## Root Access 🏁👑
+
+- Root privileges confirmed  
+- root.txt flag retrieved  
+- Full system compromise achieved  
+
+Boiler CTF completed.
+
+---
+
+## Key Takeaways 🧠📌
+
+- Enumeration beats exploitation when things feel “stuck”  
+- Anonymous FTP often hides essential clues  
+- robots.txt can act as a puzzle delivery mechanism  
+- CMS-specific enumeration is non-negotiable  
+- SUID binaries remain a reliable escalation vector  
+
+---
+
+## 📬 Contact & Projects 👨‍💻📎
+
+**Daksh Baweja**  
+📧 Email: dakshbaweja20@gmail.com  
+🐙 GitHub: https://github.com/sudo0xksh  
+🔗 LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid 🔥
+
+**Deteroid** is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers **hunt smarter, not louder**.
+
+📸 Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+Boiler CTF delivers a clean message:
+
+> “If you rush, you lose.  
+> If you enumerate, you win.”
+
+Layered clues.  
+Classic mistakes.  
+Earned root.
+
+Medium box.  
+Strong fundamentals.
