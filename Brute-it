@@ -1,0 +1,186 @@
+# Brute It — TryHackMe (Easy) 🔐🧠⚔️
+
+Brute It is exactly what the name promises.
+No tricks. No hidden magic.
+
+Just focused enumeration, credential abuse, and a classic sudo misconfiguration.
+A perfect beginner-friendly machine that reinforces core fundamentals.
+
+---
+
+## Machine Overview 🖥️📌
+
+Room Name: Brute It  
+Target IP: 10.10.236.217  
+Operating System: Linux  
+Difficulty: Easy  
+
+Focus Areas:
+- Web enumeration
+- Login brute forcing
+- SSH key handling
+- Sudo misconfiguration
+- Practical use of GTFOBins
+
+---
+
+## Reconnaissance 🔍
+
+Initial service enumeration was performed using Nmap.
+
+nmap -sC -sV 10.10.236.217
+
+Results:
+
+- 22/tcp  SSH    OpenSSH 7.6p1  
+- 80/tcp  HTTP   Apache httpd 2.4.29  
+
+Only SSH and HTTP were exposed, indicating a small and focused attack surface.
+
+---
+
+## Web Enumeration 🌐
+
+Visiting the website on port 80 showed the default Apache2 landing page.
+No useful information was found in the page source.
+
+Directory enumeration revealed an important endpoint:
+
+/admin
+
+This endpoint hosted a login panel.
+Given the machine name “Brute It”, a brute-force attack was the intended path.
+
+---
+
+## Brute Forcing the Admin Panel 🔐
+
+The login panel showed no rate limiting or protection.
+Hydra was used to brute-force the credentials.
+
+Command used:
+
+hydra -l admin -P /usr/share/wordlists/rockyou.txt \
+http-post-form "/admin:username=^USER^&password=^PASS^:F=incorrect"
+
+Credentials found:
+
+Username: admin  
+Password: xavier  
+
+Admin access was successfully obtained.
+
+---
+
+## Admin Panel Enumeration 🗝️
+
+After logging into the admin panel, an RSA private SSH key was discovered.
+The key was password protected, so the next step was to crack the passphrase.
+
+---
+
+## Cracking the SSH Key Passphrase 🔓
+
+The private key was cracked using John the Ripper.
+
+Result:
+
+Passphrase: rockinroll
+
+With the passphrase recovered, the SSH key became usable.
+
+---
+
+## Initial Foothold (SSH) 🖥️
+
+Using the cracked SSH key:
+
+ssh -i id_rsa john@10.10.236.217
+
+Login was successful.
+Initial foothold achieved as user **john**.
+
+---
+
+## Privilege Escalation 🚀
+
+Sudo permissions were checked:
+
+sudo -l
+
+Output revealed:
+
+(ALL) NOPASSWD: /bin/cat
+
+This means the user john could execute `cat` as root without a password.
+
+---
+
+## Privilege Escalation via GTFOBins 🧠
+
+According to GTFOBins, `cat` can be abused to read sensitive files as root.
+
+Root flag retrieved using:
+
+sudo cat /root/root.txt
+
+---
+
+## Flags 🏁
+
+User Flag: Retrieved after SSH access  
+Root Flag: Retrieved via sudo misconfiguration  
+
+Machine fully compromised.
+
+---
+
+## Summary ✅
+
+- Discovered admin login panel through basic enumeration  
+- Brute-forced credentials using Hydra  
+- Extracted and cracked a password-protected SSH key  
+- Gained SSH access as a low-privileged user  
+- Escalated privileges using a sudo misconfiguration  
+
+---
+
+## Key Takeaways 🧠📌
+
+- Enumeration matters more than exploits  
+- Login panels without rate limiting are dangerous  
+- SSH keys are only as strong as their passphrases  
+- Sudo misconfigurations can instantly lead to root access  
+- Understanding the machine’s context helps guide the attack path  
+
+---
+
+## 📬 Contact & Projects 👨‍💻
+
+Daksh Baweja  
+Email: dakshbaweja20@gmail.com  
+GitHub: https://github.com/sudo0xksh  
+LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid
+
+Deteroid is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers hunt smarter, not louder.
+
+Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+Brute It proves one simple lesson:
+
+“You don’t need exploits  
+when passwords and sudo are broken.”
+
+Easy machine.  
+Strong fundamentals.
