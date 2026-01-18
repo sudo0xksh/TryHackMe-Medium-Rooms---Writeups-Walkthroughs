@@ -1,0 +1,203 @@
+# HA: Joker — TryHackMe (Medium • Guided) 🃏🧠🐧
+
+HA: Joker is a guided Medium box that stitches together
+**layered web enumeration**, **credential harvesting**, **CMS exploitation**,
+and a clean **LXD container escape**.
+
+It starts playful.
+It ends with host-level root.
+
+---
+
+## Machine Overview 🖥️📌
+
+Machine Name: HA: Joker  
+Target IP: 10.10.xxx.xxx  
+Operating System: Ubuntu-based Linux  
+Difficulty: Guided CTF  
+
+This machine focuses on:
+- Enumerating **multiple web services**
+- Breaking **HTTP Basic Auth**
+- Exploiting **Joomla CMS**
+- Escaping an **LXD container**
+- Achieving **full host compromise**
+
+Web → CMS → Container → Host.
+
+---
+
+## Initial Reconnaissance 🔍
+
+A full TCP scan was performed to map exposed services.
+
+nmap -sC -sV 10.10.xxx.xxx
+
+Services discovered:
+
+22/tcp    SSH     OpenSSH 7.6p1 🔐  
+80/tcp    HTTP    Apache 2.4.29 (HA: Joker) 🌐  
+8080/tcp  HTTP    Apache 2.4.29 (Basic Auth protected) 🔒  
+
+Two HTTP services immediately suggested **layered enumeration**.
+
+---
+
+## Web Enumeration (Port 80) 🌐🧐
+
+The main website showed minimal content.
+
+A provided hint suggested **directory brute-forcing with extensions**.
+Following that guidance revealed a sensitive file:
+
+👉 **secret.txt**
+
+Inside it:
+- A valid username was disclosed: **joker**
+
+This shifted the attack path from discovery to authentication.
+
+---
+
+## Attacking Port 8080 (Basic Auth) 🔐
+
+Port 8080 was protected using **HTTP Basic Authentication**.
+
+Using the discovered username:
+- A targeted brute-force attack was launched
+- A common password wordlist was used
+
+Result:
+- Valid credentials recovered
+- Access to the service on port 8080 obtained
+
+Once authenticated, the real application appeared.
+
+---
+
+## CMS Discovery & Enumeration 🧩
+
+The authenticated service was identified as **Joomla CMS**, including access to:
+
+/administrator/
+
+Further enumeration revealed a sensitive archive:
+
+👉 **backup.zip**
+
+At this point, everything pointed toward credential extraction.
+
+---
+
+## Credential Extraction 🔑
+
+The backup archive was password-protected.
+
+Steps taken:
+- Password hash extracted
+- Hash cracked using **john**
+
+Inside the archive:
+- A MySQL dump containing **hashed administrator credentials**
+
+The admin password was cracked successfully.
+
+Result:
+- Full Joomla admin access achieved
+
+---
+
+## Initial Foothold 💥
+
+With admin access:
+- A malicious payload was uploaded
+- Reverse shell obtained
+
+Code execution confirmed.
+
+However, environment inspection revealed a critical detail.
+
+---
+
+## Container Discovery (LXD) 🧱
+
+The shell was running **inside an LXD container**, not directly on the host.
+
+This explained:
+- Restricted privileges
+- Limited system visibility
+
+The challenge shifted from traditional privilege escalation to:
+👉 **Container escape**
+
+---
+
+## Escaping the LXD Container 🚀
+
+Research into LXD misconfigurations revealed a known escape technique:
+
+- Import a **privileged container image**
+- Mount the **host filesystem**
+- Execute commands with elevated privileges
+
+The method worked as expected.
+
+Result:
+- Host filesystem accessed
+- Control moved outside the container
+
+---
+
+## Root Access 🏁👑
+
+- Root privileges on the host confirmed  
+- Final flag retrieved and submitted  
+- Full system compromise achieved  
+
+HA: Joker completed.
+
+---
+
+## Key Takeaways 🧠📌
+
+- Multiple web services often indicate privilege separation  
+- HTTP Basic Auth is only as strong as its credentials  
+- Backup files are high-value targets  
+- CMS admin access frequently leads directly to RCE  
+- Containers are **not** security boundaries when misconfigured  
+- LXD misconfigs can result in full host compromise  
+
+---
+
+## 📬 Contact & Projects 👨‍💻📎
+
+**Daksh Baweja**  
+📧 Email: dakshbaweja20@gmail.com  
+🐙 GitHub: https://github.com/sudo0xksh  
+🔗 LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid 🔥
+
+**Deteroid** is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers **hunt smarter, not louder**.
+
+📸 Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+HA: Joker delivers one clear message:
+
+> “Containers don’t save you from bad decisions.”
+
+Two websites.  
+One CMS.  
+One container escape.
+
+Medium box.  
+Very real-world attack chain.
