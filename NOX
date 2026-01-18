@@ -1,0 +1,198 @@
+# NOX — TryHackMe (Medium) 🧪🧠🌌
+
+NOX is not about exploits.
+It’s about **seeing patterns**, **reading clues**, and **thinking sideways**.
+
+If you try to brute-force this box, it laughs.
+If you reason through it, it opens up cleanly.
+
+---
+
+## Machine Overview 🖥️📌
+
+Machine Name: NOX  
+Target IP: 10.10.xxx.xxx  
+Operating System: Linux  
+Difficulty: Medium  
+
+This machine emphasizes:
+- **Logical reasoning over brute force**
+- **Non-traditional enumeration**
+- **Visual + encoding-based clues**
+- Exploitation of **enterprise monitoring software (Nagios)**
+
+Tools help — but **thinking wins**.
+
+---
+
+## Initial Reconnaissance 🔍
+
+A full TCP scan was performed to understand the exposed services.
+
+nmap -sC -sV 10.10.xxx.xxx
+
+Services discovered:
+
+22/tcp    SSH     OpenSSH 7.2p2 🔐  
+25/tcp    SMTP    Postfix 📧  
+80/tcp    HTTP    Apache 2.4.18 🌐  
+389/tcp   LDAP    OpenLDAP 📚  
+443/tcp   HTTPS   Apache (Nagios-related SSL cert) 🔒  
+
+The presence of:
+- LDAP
+- SMTP
+- Nagios-related SSL certificates
+
+…strongly suggested an **enterprise-style monitoring environment**,  
+not a basic web challenge.
+
+---
+
+## Web Enumeration 🌐🧐
+
+Manual inspection of the website revealed a minimal landing page.
+
+However, one thing immediately stood out:
+
+- A **periodic table–like layout**
+- Pairs of letters that didn’t look random
+
+Given that this was a guided CTF, the visual clue was intentional.
+
+This was not decoration.
+This was data.
+
+---
+
+## Reasoning the Periodic Table Clue 🧠🧩
+
+The symbols displayed were:
+
+Ag – Hg – Ta – Sb – Po – Pd – Hg – Pt – Lr
+
+Mapping each element to its **atomic number**:
+
+- Ag = 47  
+- Hg = 80  
+- Ta = 73  
+- Sb = 51  
+- Po = 84  
+- Pd = 46  
+- Hg = 80  
+- Pt = 78  
+- Lr = 103  
+
+Resulting numeric sequence:
+
+47 80 73 51 84 46 80 78 103
+
+Converting this sequence to ASCII produced:
+
+👉 **PI3T.png**
+
+This confirmed the existence of a hidden image file.
+
+---
+
+## Image Analysis 🖼️🔎
+
+The image was downloaded and analyzed.
+
+Using metadata inspection (exiftool), the **artist field** revealed meaningful information tied directly to the challenge flow.
+
+This confirmed that:
+- The attack path was **logic-driven**
+- Traditional brute force was not intended
+
+The image wasn’t just a picture.
+
+---
+
+## Source Code Recovery (Piet Programming) 🎨➡️💻
+
+Further hints suggested the image was actually **Piet code**  
+(an esoteric programming language where images *are* programs).
+
+Using **npiet**, the image was converted into readable logic.
+
+This revealed valid credentials:
+
+Username: **nagiosadmin**  
+Password: **n3p3UQ&9BjLp4$7uhWdY**
+
+At this point, the box shifted from puzzle to exploitation.
+
+---
+
+## Nagios XI Exploitation 🚀
+
+Using the recovered credentials:
+- Access to the **Nagios XI dashboard** was obtained
+
+Version enumeration confirmed:
+- A known **Remote Code Execution vulnerability**
+
+An existing exploit module was used to gain command execution.
+
+Result:
+- Remote shell obtained
+- Service context provided elevated access
+
+---
+
+## Flag Retrieval 🏁
+
+With command execution achieved:
+
+- User flag retrieved  
+- Root-level access confirmed via service context  
+- Final flag obtained  
+
+NOX fully compromised.
+
+---
+
+## Key Takeaways 🧠📌
+
+- Enumeration is not always technical — **visual clues matter**
+- Periodic table references were intentional, not decorative
+- Encoding layers can exist outside standard cryptography
+- Image files can contain executable logic
+- Monitoring software like **Nagios** is a high-value target
+- **Reasoning > brute force > tools**
+
+---
+
+## 📬 Contact & Projects 👨‍💻📎
+
+**Daksh Baweja**  
+📧 Email: dakshbaweja20@gmail.com  
+🐙 GitHub: https://github.com/sudo0xksh  
+🔗 LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid 🔥
+
+**Deteroid** is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers **hunt smarter, not louder**.
+
+📸 Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+NOX teaches one rare lesson:
+
+> “Not everything needs to be attacked.  
+> Some things need to be understood.”
+
+Patterns over payloads.  
+Logic over noise.
+
+Medium box.  
+Excellent mental exercise.
