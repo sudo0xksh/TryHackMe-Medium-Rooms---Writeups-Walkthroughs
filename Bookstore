@@ -1,0 +1,201 @@
+# BookStore — TryHackMe (Medium) 📚🧠🐍
+
+BookStore is a Medium box that rewards **API-first thinking** and punishes
+anyone who ignores backend services hiding behind “normal-looking” websites.
+
+The path is clear once you see it:
+API → LFI → Debug Console → Shell → SUID → Root.
+
+---
+
+## Machine Overview 🖥️📌
+
+Machine Name: BookStore  
+Target IP: 10.10.xxx.xxx  
+Operating System: Ubuntu-based Linux  
+
+This machine focuses on:
+- **API enumeration** over traditional web hacking
+- Exploiting **Local File Inclusion (LFI)**
+- Gaining code execution via an **exposed debug console**
+- Privilege escalation using a **custom SUID binary**
+
+Modern stack. Classic mistakes.
+
+---
+
+## Initial Reconnaissance 🔍
+
+A full TCP scan was performed to map exposed services.
+
+nmap -sC -sV 10.10.xxx.xxx
+
+Services discovered:
+
+22/tcp    SSH     OpenSSH 7.6p1 🔐  
+80/tcp    HTTP    Apache 2.4.29 (Book Store website) 🌐  
+5000/tcp  HTTP    Werkzeug 0.14.1 (Python 3.6.9 API) 🐍  
+
+Port **5000** immediately stood out.
+Python + Werkzeug + API usually means **logic bugs**, not injections.
+
+---
+
+## Web Enumeration (Port 80) 🌐🧐
+
+Manual inspection of the Book Store website showed nothing immediately exploitable.
+
+While reviewing page source:
+- Encoded content was found
+- Decoding it resulted in a **rickroll**
+
+Conclusion:
+👉 This path was intentionally misleading.
+
+No attack surface here.
+Time to look where developers actually work — the API.
+
+---
+
+## API Enumeration (Port 5000) 🧠📡
+
+Accessing port 5000 revealed:
+- API documentation
+- A **Werkzeug debug console**, protected by a PIN
+
+This was a major red flag.
+
+Debug consoles should never be exposed publicly —  
+and if the PIN can be recovered, RCE is guaranteed.
+
+A hint suggested the PIN might be derived from **local system artifacts**.
+
+---
+
+## Local File Inclusion Discovery 📂💥
+
+While inspecting API parameters, backend file handling looked suspicious.
+
+Hypothesis:
+👉 Improper path handling could allow **Local File Inclusion (LFI)**.
+
+Testing confirmed it.
+
+Using crafted requests, arbitrary files from the filesystem could be read.
+
+This shifted the entire attack:
+LFI → Credential discovery → Console access.
+
+---
+
+## Debug PIN Extraction 🔑
+
+With LFI confirmed, attention turned to user history files.
+
+Targeted file:
+/home/sid/.bash_history
+
+Inside it:
+- The **Werkzeug debugger PIN** was found
+
+Using this PIN:
+- Debug console access was successfully obtained
+
+From here, code execution was trivial.
+
+---
+
+## Initial Foothold 🐾
+
+The debug console allowed arbitrary Python execution.
+
+A Python reverse shell payload was executed.
+
+Results:
+- Stable shell obtained
+- User-level access confirmed
+- user.txt flag retrieved  
+
+At this point, the API had done all the damage.
+
+---
+
+## Privilege Escalation Enumeration 🔎
+
+Post-exploitation enumeration identified a suspicious SUID binary:
+
+👉 **try-harder**
+
+Custom SUID binaries are never safe by default.
+This became the primary escalation target.
+
+---
+
+## Privilege Escalation via SUID Binary 🚀
+
+Analysis of `try-harder` revealed:
+- Input validation logic
+- XOR-based transformation
+- A required **magic value** to trigger privileged execution
+
+By reversing the validation logic and supplying the correct value:
+- The binary executed as root
+
+No exploits.
+Just math and logic.
+
+---
+
+## Root Access 🏁👑
+
+- Root privileges confirmed  
+- root.txt flag retrieved  
+- Full system compromise achieved  
+
+BookStore completed cleanly.
+
+---
+
+## Key Takeaways 🧠📌
+
+- APIs often expose more attack surface than websites  
+- Debug consoles should never reach production  
+- LFI frequently leads directly to RCE  
+- History files are credential goldmines  
+- Custom SUID binaries deserve extra scrutiny  
+
+---
+
+## 📬 Contact & Projects 👨‍💻📎
+
+**Daksh Baweja**  
+📧 Email: dakshbaweja20@gmail.com  
+🐙 GitHub: https://github.com/sudo0xksh  
+🔗 LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid 🔥
+
+**Deteroid** is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers **hunt smarter, not louder**.
+
+📸 Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+BookStore teaches one modern lesson:
+
+> “If your debug tools are public,  
+> your API already belongs to attackers.”
+
+API logic.  
+One LFI.  
+Clean root.
+
+Medium box.  
+Very realistic mistakes.
