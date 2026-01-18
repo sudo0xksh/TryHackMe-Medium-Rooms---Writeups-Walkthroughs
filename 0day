@@ -1,0 +1,201 @@
+# 0day — TryHackMe (Medium) 🐢🌪️🧠
+
+0day is a Medium box that blends **old-school web exploitation** with  
+**kernel-level privilege escalation**.
+
+Nothing fancy.  
+Nothing modern.  
+Just legacy tech quietly waiting to be abused.
+
+---
+
+## Machine Overview 🖥️📌
+
+Machine Name: 0day  
+Target IP: 10.10.xxx.xxx  
+Operating System: Ubuntu-based Linux  
+
+This machine focuses on:
+- Gaining an **initial foothold via a classic web vulnerability**
+- Recognizing the danger of an **outdated Linux kernel**
+- Escalating privileges using a **kernel-level exploit**
+
+The hint says it all:
+> *“Exploit Ubuntu, like a turtle in a hurricane.”*
+
+Slow, old, and absolutely helpless.
+
+---
+
+## Initial Reconnaissance 🔍
+
+A full TCP scan was performed to understand the exposed surface.
+
+nmap -sC -sV 10.10.xxx.xxx
+
+Services discovered:
+
+22/tcp   SSH    OpenSSH 6.6.1p1 🔐  
+80/tcp   HTTP   Apache 2.4.7 🌐  
+
+Additional observations:
+- Page title: **0day**
+- Linux kernel: **4.4**
+
+That kernel version immediately stood out —  
+Linux 4.4 is **ancient** and well-documented for local privilege escalation.
+
+---
+
+## Web Enumeration (Port 80) 🌐🧐
+
+Initial web enumeration focused on identifying common entry points.
+
+- Manual inspection revealed no obvious uploads or injections  
+- Automated enumeration was used to locate hidden paths  
+
+At this stage, the web app alone did not provide direct access.
+
+However, the provided hint made one thing clear:
+
+👉 **Web access is only the entry — kernel exploitation is the endgame.**
+
+---
+
+## Backup Artifact Discovery 📦🔑
+
+Continued enumeration uncovered an exposed backup artifact.
+
+Inside it:
+- An **SSH private key**
+
+The key was encrypted with a passphrase.
+
+After identifying the key format and cracking the passphrase:
+
+Passphrase recovered:
+- **letmein**
+
+However, authentication still failed —  
+the **username was unknown**.
+
+This meant the key alone was not enough.
+
+---
+
+## Identifying the Initial Foothold 🧠🎯
+
+Instead of brute-forcing usernames, the attack surface was revisited.
+
+Further inspection of the web server revealed a critical endpoint:
+
+👉 **/cgi-bin/test.cgi**
+
+This immediately raised alarms.
+
+Legacy CGI + Apache + Ubuntu =  
+**Shellshock candidate**.
+
+---
+
+## Exploitation via Shellshock 💥🐚
+
+The CGI endpoint was confirmed vulnerable to **Shellshock**.
+
+By crafting malicious HTTP headers:
+- Arbitrary command execution was achieved
+- A reverse shell was spawned
+
+Result:
+- Stable user-level shell obtained  
+- Initial foothold confirmed  
+
+At this point, the machine was compromised —  
+but not yet owned.
+
+---
+
+## Post-Exploitation Enumeration 🔎
+
+Once inside the system, enumeration confirmed:
+
+- Ubuntu distribution with **Linux kernel 4.4**
+- Kernel known to be vulnerable to multiple LPE exploits
+
+This aligned perfectly with:
+- The hint  
+- The machine name  
+- The overall design  
+
+Everything pointed toward **kernel exploitation**.
+
+---
+
+## Privilege Escalation 🚀🧠
+
+A privilege escalation exploit compatible with **Linux kernel 4.4** was selected.
+
+The exploit was executed successfully.
+
+Result:
+- Root-level privileges obtained  
+- System fully compromised  
+
+No sudo abuse.  
+No misconfigured scripts.  
+Just an unpatched kernel doing what it does best.
+
+---
+
+## Root Access 🏁👑
+
+- Root privileges confirmed  
+- root.txt flag retrieved  
+- Full system compromise achieved  
+
+Mission complete.
+
+---
+
+## Key Takeaways 🧠📌
+
+- Backup files often leak high-impact credentials  
+- Encrypted keys are only as strong as their passphrases  
+- Legacy CGI scripts still expose Shellshock in the wild  
+- Old Linux kernels are privilege escalation goldmines  
+- Timely patching would have stopped everything  
+
+---
+
+## 📬 Contact & Projects 👨‍💻📎
+
+**Daksh Baweja**  
+📧 Email: dakshbaweja20@gmail.com  
+🐙 GitHub: https://github.com/sudo0xksh  
+🔗 LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid 🔥
+
+**Deteroid** is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers **hunt smarter, not louder**.
+
+📸 Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+0day reinforces one harsh reality:
+
+> “An unpatched kernel is already compromised.”
+
+Classic web bug.  
+Old kernel.  
+Guaranteed root.
+
+Medium box.  
+Very real-world lesson.
