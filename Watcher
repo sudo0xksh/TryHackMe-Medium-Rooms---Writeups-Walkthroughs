@@ -1,0 +1,63 @@
+# Watcher — TryHackMe (Medium) 👁️🧠🧩
+
+Watcher doesn’t hide bugs.
+It waits for you to **connect them**.
+
+This box is all about **chaining**:
+robots.txt → LFI → FTP → sudo → scripts → backups → root.
+
+If you jump steps, you miss flags.
+If you think methodically, it unfolds cleanly.
+
+---
+
+## Machine Overview 🖥️📌
+
+Room Name: Watcher  
+Operating System: Linux  
+Difficulty: Medium  
+
+Primary focus:
+- Web enumeration & **robots.txt**
+- **Local File Inclusion (LFI)** used correctly
+- Service pivoting via **FTP**
+- **Sudo misconfigurations**
+- Script sourcing abuse
+- Backup analysis leading to root
+
+No kernel exploits.  
+Just logic, trust issues, and bad ops hygiene.
+
+---
+
+## Reconnaissance 🔍
+
+Initial port scan revealed three exposed services:
+
+- 21/tcp  FTP 📁  
+- 22/tcp  SSH 🔐  
+- 80/tcp  HTTP 🌐  
+
+With HTTP exposed, the attack path was clearly web-centric.
+
+---
+
+## Web Enumeration 🌐🧐
+
+### robots.txt — Flag 1 🤖
+
+The first hint pushed directly toward `robots.txt`.
+
+Findings:
+- A visible flag (**Flag 1**)
+- A forbidden file: **secret.txt**
+
+Direct access to `secret.txt` was blocked, but it was logged for later.
+This wasn’t a dead end — it was a breadcrumb.
+
+---
+
+## Local File Inclusion (LFI) 📂🔓
+
+Further enumeration identified a vulnerable parameter:
+
