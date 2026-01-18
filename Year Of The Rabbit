@@ -1,0 +1,276 @@
+# Year of the Rabbit — TryHackMe (Easy–Medium) 🐇🧠🧩
+
+Year of the Rabbit is a classic **enumeration + curiosity** box.
+Nothing is handed to you.
+Every step rewards paying attention to *small details*.
+
+No exploits spam.
+No brute forcing blindly.
+Just chaining findings correctly.
+
+---
+
+## Machine Overview 🖥️📌
+
+Room Name: Year of the Rabbit  
+Target IP: 10.10.97.202  
+Operating System: Linux  
+Difficulty: Easy–Medium  
+
+Focus Areas:
+- Web enumeration
+- Hidden files in static content
+- Steganography
+- Encoding/decoding (Brainfuck)
+- Lateral movement
+- Sudo misconfiguration (CVE-based privesc)
+
+---
+
+## Reconnaissance 🔍
+
+Initial enumeration using Nmap:
+
+nmap -sC -sV 10.10.97.202
+
+yaml
+Copy code
+
+Results:
+
+- 21/tcp  FTP    vsftpd 3.0.2  
+- 22/tcp  SSH    OpenSSH 6.7p1  
+- 80/tcp  HTTP   Apache httpd 2.4.10  
+
+Key observations:
+- FTP, SSH, and HTTP all exposed
+- Apache version is old but not directly exploitable
+- FTP likely plays a role in initial access
+
+---
+
+## Web Enumeration 🌐
+
+Visiting the website showed the default Apache page.
+
+Initial checks:
+- robots.txt → not present
+- Page source → nothing obvious
+
+Directory enumeration revealed:
+
+/assets
+
+markdown
+Copy code
+
+Inside `/assets`, the page looked harmless (Rickroll), but deeper inspection mattered.
+
+### Important Finding
+
+Inside **style.css**, a hidden reference was discovered:
+
+/sup3r_s3cr3t_fl4g.php
+
+yaml
+Copy code
+
+Static files don’t lie — if you read them.
+
+---
+
+## Hidden Page & Steganography 🧩
+
+Accessing `/sup3r_s3cr3t_fl4g.php` revealed:
+- A clue
+- A PNG image
+
+Given the context, steganography was the logical next step.
+
+### Image Analysis
+
+Extracting strings from the image revealed:
+- FTP username
+- A password wordlist
+
+This confirmed FTP as the next pivot point.
+
+---
+
+## FTP Brute Force 🔐
+
+Using the discovered username and wordlist:
+
+hydra -l ftpuser -P wordlist.txt ftp://10.10.97.202
+
+yaml
+Copy code
+
+Result:
+- Valid FTP credentials found
+
+Logging into FTP revealed:
+- A file containing **Eli’s credentials**
+- Password was encoded, not plaintext
+
+---
+
+## Brainfuck Decoding 🧠
+
+The encoded password initially looked confusing.
+After inspection, it turned out to be **Brainfuck code**.
+
+Decoding it revealed:
+- Eli’s SSH password
+
+Another example of *knowing common encodings pays off*.
+
+---
+
+## Initial Foothold (SSH) 🖥️
+
+Using the decoded credentials:
+
+ssh eli@10.10.97.202
+
+yaml
+Copy code
+
+Result:
+- SSH login successful
+- Initial foothold achieved as **eli**
+
+---
+
+## Lateral Movement — Gwendoline 🕵️‍♂️
+
+Upon login, a message from root hinted at a *“leet s3cr3t hiding place”*.
+
+Two interesting files stood out:
+- `/var/www/html/sup3r_s3cr3t_fl4g.php`
+- `/usr/games/s3cr3t`
+
+The binary `/usr/games/s3cr3t` contained an encoded string:
+
+MniVCQVhQHUNI
+
+yaml
+Copy code
+
+Decoding it revealed:
+- Gwendoline’s password
+
+Switching user:
+
+su gwendoline
+
+yaml
+Copy code
+
+User flag retrieved successfully.
+
+---
+
+## Privilege Escalation 🔼
+
+Checking sudo permissions:
+
+sudo -l
+
+yaml
+Copy code
+
+Observation:
+- Gwendoline could run `vi` with sudo under specific conditions
+
+This hinted at a known sudo vulnerability.
+
+---
+
+## CVE-2019–14287 — Sudo Bypass ⚠️
+
+The system was vulnerable to **CVE-2019–14287**.
+
+Exploitation:
+
+sudo -u#-1 /usr/bin/vi /home/gwendoline/user.txt
+
+javascript
+Copy code
+
+Inside `vi`, escape to shell:
+
+:!/bin/bash
+
+yaml
+Copy code
+
+---
+
+## Root Access 👑
+
+Result:
+- Root shell obtained
+
+Root flag retrieved:
+
+cat /root/root.txt
+
+yaml
+Copy code
+
+Machine fully compromised.
+
+---
+
+## Summary 🏁
+
+- Web enumeration led to hidden static references  
+- Steganography revealed FTP credentials  
+- Brainfuck decoding unlocked SSH access  
+- Lateral movement via hidden binaries  
+- Privilege escalation using CVE-2019–14287  
+
+A clean, well-chained attack path.
+
+---
+
+## Key Takeaways 🔑
+
+- Always inspect static files (CSS, JS)  
+- Don’t ignore strange encodings  
+- Enumeration beats brute force  
+- Knowing common sudo CVEs is extremely powerful  
+- Small clues add up to full compromise  
+
+---
+
+## 📬 Contact & Projects 👨‍💻
+
+Daksh Baweja  
+Email: dakshbaweja20@gmail.com  
+GitHub: https://github.com/sudo0xksh  
+LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid
+
+Deteroid is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers hunt smarter, not louder.
+
+Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+Year of the Rabbit teaches one clear lesson:
+
+> “The flag isn’t hidden.  
+> It’s waiting for you to look properly.”
+
+Easy–Medium box.  
+Excellent enumeration practice.
