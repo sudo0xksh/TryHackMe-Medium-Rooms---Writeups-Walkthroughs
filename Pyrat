@@ -1,0 +1,198 @@
+# Pyrat — TryHackMe (Medium) 🐍⚓🧠
+
+Pyrat is a Medium-level machine that punishes one very specific mistake:
+
+> **Treating user input as executable code.**
+
+No traditional web app.  
+No forms.  
+No CMS.
+
+Just a **custom Python service**, raw input, loud error messages,  
+and developers leaving their Git repo right on the server.
+
+---
+
+## Machine Overview 🖥️📌
+
+Machine Name: Pyrat  
+Target IP: 10.81.xxx.xxx  
+Operating System: Ubuntu-based Linux  
+
+This machine focuses on:
+- Breaking a **custom Python-based web service**
+- Achieving **RCE through unconventional input handling**
+- Escalating privileges via **exposed Git repository metadata**
+
+This is less about tools — more about **understanding behavior**.
+
+---
+
+## Initial Reconnaissance 🔍
+
+Started with a full TCP scan to understand what the system exposed.
+
+nmap -sC -sV 10.81.xxx.xxx
+
+Services discovered:
+
+22/tcp    SSH       OpenSSH 8.2p1 🔐  
+8000/tcp  HTTP-alt  SimpleHTTP/0.6 (Python 3.11.2) 🐍  
+
+Port **8000** immediately behaved strangely.
+
+Instead of HTML or JSON, it returned **Python error messages**.
+
+That alone changed the entire attack strategy.
+
+---
+
+## Web Service Analysis (Port 8000) 🧠🐍
+
+Interacting with the service revealed multiple red flags:
+
+- GET and OPTIONS returned Python exceptions  
+- Error messages referenced Python syntax and variables  
+- Sample errors included:
+
+name 'GET' is not defined  
+source code string cannot contain null bytes  
+
+This strongly suggested:
+
+👉 **User input was being evaluated as Python code**, not parsed as HTTP.
+
+At this point, this wasn’t a web app —  
+it was a poorly disguised Python interpreter.
+
+---
+
+## Command Execution via Network Interaction 📡💥
+
+Instead of using a browser, the service was tested via **raw socket interaction**.
+
+Sending crafted input directly to the service resulted in:
+
+- Python expressions being evaluated
+- System-level commands executing
+- A Python shell–like environment exposed over the network
+
+This confirmed **remote code execution** without exploits.
+
+The application did the damage itself.
+
+---
+
+## Initial Foothold 🐾
+
+Using the execution context, a reverse shell was established.
+
+Results:
+- Stable interactive shell obtained
+- User-level access confirmed
+
+Initial compromise complete.
+
+Now the real work began.
+
+---
+
+## Post-Exploitation Enumeration 🔎
+
+Standard enumeration followed.
+
+One directory stood out immediately:
+
+/opt/dev
+
+Inside it:
+- A `.git` directory was present  
+- Full Git metadata accessible  
+
+A Git repository on a production system almost always means:
+👉 **credentials, notes, or internal logic leaked**
+
+---
+
+## Credential Discovery via Git Metadata 🧬🔑
+
+Inspecting Git configuration and history revealed:
+
+- Hardcoded credentials
+- References to a user named **think**
+
+Authentication attempt using the recovered credentials succeeded.
+
+User switched:
+- think ✅
+
+This was not privilege escalation —  
+this was **developers handing over access**.
+
+---
+
+## Lateral Movement & Privilege Escalation 🚀
+
+Further analysis of the Git repository revealed:
+
+- Internal notes
+- Administrative hints
+- Context around elevated access
+
+Using this information, authentication as **admin** was achieved.
+
+From there:
+- Root access was obtained
+- Privilege escalation completed without kernel exploits
+
+---
+
+## Root Access 🏁👑
+
+- Root privileges confirmed  
+- root.txt flag retrieved  
+- Full system compromise achieved  
+
+The box fell apart due to logic, not vulnerabilities.
+
+---
+
+## Key Takeaways 🧠📌
+
+- Custom services are the most dangerous attack surface  
+- Error messages expose backend logic faster than scanning  
+- Executing user input is catastrophic  
+- Git repositories should never ship with metadata  
+- Developer artifacts often contain everything attackers need  
+
+---
+
+## 📬 Contact & Projects 👨‍💻📎
+
+**Daksh Baweja**  
+📧 Email: dakshbaweja20@gmail.com  
+🐙 GitHub: https://github.com/sudo0xksh  
+🔗 LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid 🔥
+
+**Deteroid** is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers **hunt smarter, not louder**.
+
+📸 Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+Pyrat teaches one hard truth:
+
+> “When developers write their own services, attackers don’t need exploits — they need patience.”
+
+Medium box.  
+Real-world logic flaws.  
+Very realistic mistakes.
