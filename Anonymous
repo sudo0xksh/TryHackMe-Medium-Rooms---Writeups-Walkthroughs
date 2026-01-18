@@ -1,0 +1,195 @@
+# Anonymous — TryHackMe (Medium) 🎭🧠🐧
+
+Anonymous is a Medium-level machine that proves one simple thing:
+
+> **You don’t need a web app to get hacked.  
+> Misconfigured services are more than enough.**
+
+No HTTP.  
+No CMS.  
+Just anonymous access, writable scripts, and SUID doing SUID things.
+
+---
+
+## Machine Overview 🖥️📌
+
+Machine Name: Anonymous  
+Target IP: 10.10.xxx.xxx  
+Operating System: Ubuntu-based Linux  
+
+This machine focuses on:
+- Abusing **anonymous services**
+- Achieving execution through **writable FTP scripts**
+- Escalating privileges via a **misconfigured SUID binary**
+
+Pure service-based exploitation. Very realistic.
+
+---
+
+## Initial Reconnaissance 🔍
+
+A full TCP scan was performed to understand the exposed services.
+
+nmap -sC -sV 10.10.xxx.xxx
+
+Services discovered:
+
+21/tcp   FTP     vsFTPd (Anonymous login enabled, writable directory) 📂  
+22/tcp   SSH     OpenSSH 7.6p1 🔐  
+139/445  SMB     Samba (Guest access enabled, signing not required) 📁  
+
+Notably:
+- No HTTP service was present
+- Entire attack surface was service-driven
+
+This immediately shifted the mindset away from web exploitation.
+
+---
+
+## FTP Enumeration 📂🧠
+
+Anonymous FTP login was enabled, allowing unrestricted access.
+
+Inside the FTP share, a writable directory was found:
+
+👉 **scripts**
+
+Contents included:
+- A cleanup shell script  
+- A log file  
+- A basic to-do file  
+
+At first glance, nothing screamed “exploit”.
+
+But boring files are often the most dangerous ones.
+
+---
+
+## Interpreting the Hint 🧩
+
+The provided hint stated:
+
+> *“What's that log file doing there?  
+> nc won't work the way you'd expect it to.”*
+
+This strongly suggested:
+- Scripts were being executed automatically
+- Manual netcat listeners alone wouldn’t help
+- Some form of scheduled or background execution was in play
+
+The attack shifted from **reading files** to **modifying them**.
+
+---
+
+## Script Abuse via FTP 🧨
+
+The cleanup script was downloaded and reviewed locally.
+
+Its logic indicated:
+- Periodic execution
+- Likely triggered by a scheduled task or service
+
+Instead of attempting direct command execution, the script was modified to include a **reverse shell payload**.
+
+Steps taken:
+- Script edited locally
+- Original script replaced via FTP upload
+
+Now it was just a matter of waiting.
+
+---
+
+## Initial Foothold 🐾
+
+Once the script executed automatically:
+
+- Reverse shell received  
+- User-level access obtained  
+- user.txt flag retrieved  
+
+This confirmed:
+👉 The script was indeed executed by the system itself.
+
+Persistence without persistence.
+
+---
+
+## Post-Exploitation Enumeration 🔎
+
+With a stable shell, privilege escalation enumeration followed.
+
+During enumeration, a binary with **SUID permissions** was discovered.
+
+Specifically:
+- An environment-related binary
+- Executable with elevated privileges
+
+SUID binaries like this are notoriously dangerous when misconfigured.
+
+---
+
+## Privilege Escalation 🚀
+
+The SUID binary was cross-referenced with known techniques.
+
+Using a standard **GTFOBins** method:
+- Command execution as root was achieved
+
+No kernel exploits.  
+No brute force.  
+Just trusted binaries doing untrusted things.
+
+---
+
+## Root Access 🏁👑
+
+- Root privileges confirmed  
+- root.txt flag retrieved  
+- Full system compromise achieved  
+
+Clean. Predictable. Effective.
+
+---
+
+## Key Takeaways 🧠📌
+
+- Anonymous FTP + writable directories is a critical risk  
+- Files don’t need to be malicious — execution makes them dangerous  
+- Modifying files is often more powerful than reading them  
+- SUID binaries remain one of the most reliable escalation vectors  
+- Simple misconfigurations can fully compromise a system  
+
+---
+
+## 📬 Contact & Projects 👨‍💻📎
+
+**Daksh Baweja**  
+📧 Email: dakshbaweja20@gmail.com  
+🐙 GitHub: https://github.com/sudo0xksh  
+🔗 LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid 🔥
+
+**Deteroid** is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers **hunt smarter, not louder**.
+
+📸 Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+Anonymous teaches a quiet lesson:
+
+> “If anyone can write, someone will execute.”
+
+No web app.  
+No noise.  
+Just services trusting the wrong people.
+
+Medium box.  
+Very real-world misconfigurations.
