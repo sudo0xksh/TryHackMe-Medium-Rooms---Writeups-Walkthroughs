@@ -1,0 +1,200 @@
+# Relevant — TryHackMe (Medium) 🪟🧠🧰
+
+Relevant is a clean **Windows transition box** — perfect for anyone moving
+from Linux-heavy CTFs into **realistic Windows enumeration**.
+
+No magic exploits.
+Just SMB, IIS, and Windows tokens doing what they always do when misconfigured.
+
+---
+
+## Machine Overview 🖥️📌
+
+Machine Name: Relevant  
+Target IP: 10.10.xxx.xxx  
+Operating System: Windows Server 2016  
+Difficulty: Medium  
+
+This machine focuses on:
+- **Windows enumeration fundamentals**
+- **SMB abuse** and credential handling
+- Web shell access via **IIS**
+- Privilege escalation using **token impersonation**
+- Understanding how Windows services interact
+
+A very realistic enterprise-style attack path.
+
+---
+
+## Initial Reconnaissance 🔍
+
+A full TCP scan was performed to identify exposed services.
+
+nmap -sC -sV 10.10.xxx.xxx
+
+Services discovered:
+
+80/tcp    HTTP    Microsoft IIS 10.0 🌐  
+135/tcp   MSRPC   Windows RPC  
+139/tcp   NetBIOS File Sharing  
+445/tcp   SMB     Windows Server 2016 📁  
+3389/tcp  RDP     Remote Desktop 🔒  
+
+From this alone, it was clear:
+- IIS was running
+- SMB was exposed
+- RDP was enabled
+
+Classic Windows surface.
+
+---
+
+## SMB Enumeration 📁🧠
+
+With SMB exposed and message signing not required, enumeration began there.
+
+Listing shares revealed an accessible share:
+
+👉 **nt4wrksv**
+
+Accessing the share without authentication was possible.
+
+Inside it:
+- A file named **passwords.txt**
+
+The contents were encoded.
+
+After decoding:
+- Valid credentials were recovered
+
+At this point, authentication was no longer the problem.
+
+---
+
+## Initial Access Attempt — RDP 🔐
+
+The recovered credentials were tested against RDP.
+
+Results:
+- One account failed authentication
+- Other credentials were valid but **did not grant RDP access**
+
+This indicated:
+👉 Credentials were correct  
+👉 **RDP was not the right entry point**
+
+Time to re-evaluate the surface.
+
+---
+
+## Extended Enumeration 🔎
+
+A full port scan revealed an additional HTTP service running on a high port:
+
+👉 **49663/tcp**
+
+Visiting this port exposed a web service tied to the same application context.
+
+Critical question formed:
+
+> Is the SMB share mapped to the web root?
+
+---
+
+## Web Shell via SMB Upload 💥
+
+The SMB share allowed **write access**.
+
+Steps taken:
+- Created a simple **ASP web shell**
+- Uploaded it directly to the SMB share
+- Accessed the shell via the web service
+
+Result:
+- Remote command execution achieved  
+- Initial foothold confirmed  
+
+User flag retrieved at this stage.
+
+This is a textbook Windows misconfiguration chain.
+
+---
+
+## Post-Exploitation Enumeration 🔎🧰
+
+With command execution on the system, enumeration continued using **winPEAS**.
+
+Key findings:
+- Token impersonation privileges available
+- Environment vulnerable to known Windows privilege escalation techniques
+
+This strongly pointed toward token-based escalation.
+
+---
+
+## Privilege Escalation — Token Impersonation 🚀
+
+The system was vulnerable to **PrintSpoofer**, a tool that abuses token privileges
+to impersonate **NT AUTHORITY\SYSTEM**.
+
+Executing PrintSpoofer resulted in:
+- SYSTEM-level shell obtained
+- Full administrative control
+
+No kernel exploits.
+Just Windows being Windows.
+
+---
+
+## Root Flag 🏁👑
+
+- SYSTEM privileges confirmed  
+- Root flag retrieved from Administrator’s desktop  
+- Machine fully compromised  
+
+Relevant completed cleanly.
+
+---
+
+## Key Takeaways 🧠📌
+
+- Windows enumeration is very different from Linux  
+- SMB misconfigurations are extremely dangerous  
+- Writable SMB shares + IIS often mean instant RCE  
+- High ports must always be scanned  
+- Token impersonation is a common real-world Windows privesc  
+- Tools like **winPEAS** are essential on Windows targets  
+
+---
+
+## 📬 Contact & Projects 👨‍💻📎
+
+**Daksh Baweja**  
+📧 Email: dakshbaweja20@gmail.com  
+🐙 GitHub: https://github.com/sudo0xksh  
+🔗 LinkedIn: https://www.linkedin.com/in/dakshbaweja  
+
+---
+
+## 🚀 Deteroid 🔥
+
+**Deteroid** is a community-driven platform for bug bounty hunters  
+to share insights, rate programs, and collaborate on real-world findings.
+
+Built to help hackers **hunt smarter, not louder**.
+
+📸 Instagram: https://www.instagram.com/deteroids/
+
+---
+
+## Final Words ☕
+
+Relevant teaches one important transition lesson:
+
+> “Windows doesn’t need exploits —  
+> it needs one misconfigured service.”
+
+SMB → IIS → Token abuse.
+
+Medium box.  
+Very real-world Windows chain.
